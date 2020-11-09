@@ -4,6 +4,9 @@
 
 {% block content %}
 <h2>{% blocktrans %}Samples{% endblocktrans %}</h2>
+<div class="alert alert-danger" role="alert">
+  Samples may include pornographic or other offensive content. You are <b>not</b> obliged to review offensive content. Please use your discretion and discuss with team.
+</div>
 {% if request.GET.label %}
 <p>
   {% if request.GET.label == '-' %}
