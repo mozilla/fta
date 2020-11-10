@@ -106,6 +106,7 @@ class Label(models.Model):
 class LabeledElement(models.Model):
     labeled_sample = models.ForeignKey(
         to=LabeledSample,
+        related_name="labeled_elements",
         on_delete=models.CASCADE,
         blank=False,
         null=False,
@@ -128,3 +129,6 @@ class LabeledElement(models.Model):
     class Meta:
         # Can't have more than one label for a field
         unique_together = ["data_fta_id", "labeled_sample"]
+
+    def __str__(self):
+        return f"{self.labeled_sample.pk} - {self.label} - {self.data_fta_id}"

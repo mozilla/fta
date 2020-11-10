@@ -40,7 +40,7 @@ class SampleTable(tables.Table):
     def render_labels(self, value, record):
         default = format_html('<a href="?label=-">-</a>')
         if hasattr(record, "labeledsample"):
-            labeled_elements = record.labeledsample.labeledelement_set.all()
+            labeled_elements = record.labeledsample.labeled_elements.all()
             labels = labeled_elements.values_list("label__slug", flat=True).distinct()
             if labels:
                 label_links = [
