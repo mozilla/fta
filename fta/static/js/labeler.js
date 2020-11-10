@@ -364,6 +364,8 @@ function createPickingUiForLoadedIframe({
             handleFormSubmit(iframe, pickedElementsMap);
         });
     }
+
+    document.querySelector(".picker-loading-overlay").classList.add("hidden");
 }
 
 export { createPickingUiForIframe };
