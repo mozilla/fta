@@ -73,6 +73,7 @@ def prevent_updating_of_frozen_page_and_data(sender, instance, **kwargs):
 class LabeledSample(models.Model):
     original_sample = models.OneToOneField(
         Sample,
+        related_name="labeled_sample",
         on_delete=models.CASCADE,
         blank=False,
         null=False,

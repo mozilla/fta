@@ -23,23 +23,28 @@ class SampleListView(LoginRequiredMixin, SingleTableView):
 
     def get_queryset(self, *args, **kwargs):
         requested_label = self.request.GET.get("label", None)
+        all_samples = (
+            Sample.objects.select_related("labeled_sample")
+            .prefetch_related("labeled_sample__labeled_elements")
+            .all()
+        )
         if requested_label == "-":
             # No labeled_samples yet
-            filtered_qs_1 = Sample.objects.filter(labeledsample__isnull=True)
-            filtered_qs_2 = Sample.objects.filter(
-                pk__in=Sample.objects.filter(labeledsample__isnull=False)
-                .annotate(nlabels=Count("labeledsample__labeledelement"))
+            filtered_qs_1 = all_samples.filter(labeled_sample__isnull=True)
+            filtered_qs_2 = all_samples.filter(
+                pk__in=all_samples.filter(labeled_sample__isnull=False)
+                .annotate(nlabels=Count("labeled_sample__labeled_elements"))
                 .filter(nlabels__exact=0)
             )
             filtered_qs = filtered_qs_1.union(filtered_qs_2)
         else:
             try:
                 requested_label = Label.objects.get(slug=requested_label)
-                filtered_qs = Sample.objects.filter(
-                    labeledsample__labeledelement__label=requested_label
+                filtered_qs = all_samples.filter(
+                    labeled_sample__labeled_elements__label=requested_label
                 ).distinct()
             except Label.DoesNotExist:
-                filtered_qs = Sample.objects.all()
+                filtered_qs = all_samples
         return filtered_qs
 
 
