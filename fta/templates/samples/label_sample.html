@@ -38,32 +38,20 @@ document.addEventListener("DOMContentLoaded", function() {
     const toggleBtn = document.getElementById("toggle-picking");
     const submitBtn = document.getElementById("submit-labels");
     const startPicking = document.getElementById("toggle-picking").checked;
-    let pickedElementsMap = new Map();
 
-    function updatePickedElementsMap({iframe, pickedElementsMap}) {
-      let element = null;
+    let preExistingLabels = [
       {% for label in labeled_elements %}
-        element = iframe.contentDocument.querySelector("[data-fta_id='{{ label.data_fta_id }}']")
-        pickedElementsMap.set(element, {
-            overlay: null,
-            tag: "{{ label.label }}",
-        });
+        {fta_id: "{{ label.data_fta_id }}", label: "{{ label.label }}"},
       {% endfor %}
+    ];
 
-    }
-
-    const initializer = {
-      iframe, toggleBtn, submitBtn, pickedElementsMap, startPicking
-    };
-    if (iframe.contentDocument !== null) {
-      updatePickedElementsMap({iframe, pickedElementsMap});
-      createPickingUiForIframe(initializer);
-    } else {
-        iframe.addEventListener("load", function() {
-          updatePickedElementsMap({iframe, pickedElementsMap});
-          createPickingUiForIframe(initializer);
-        });
-    }
+    createPickingUiForIframe({
+      iframe,
+      toggleBtn,
+      submitBtn,
+      startPicking,
+      preExistingLabels,
+    });
 });
 </script>
 {% endblock extrajavascript %}
