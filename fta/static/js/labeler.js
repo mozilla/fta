@@ -56,11 +56,20 @@ function outerRelativePositionForElement(element)
         result.left = result.left + frameRect.left;
     } while (next !== null);
 
+    const outermostRect = current.getBoundingClientRect();
+
+    // Remove section hidden by scrolled outermost iframe
+    const hiddenTop = outermostRect.top - result.top;
+    result.height -= hiddenTop;
+
+    // Clamp top to outermost iframe
+    result.top = Math.max(result.top, outermostRect.top);
+
     return result;
 }
 
 // Positions (absolutely) `overlay` (lives in outer page) over `tracked_element`
-// (lives in `iframe`).
+// (lives in `iframe` - potentially in a nested iframe).
 function updateOverlayPosition(iframe, overlay, tracked_element)
 {
     const absolutePos = outerRelativePositionForElement(tracked_element);
@@ -263,6 +272,7 @@ function createPickingUiForLoadedIframe({
     // document as much as possible. We simply reposition it over the
     // corresponding element in the iframe.
     let overlay = createOverlayDiv();
+    let currentlyHovered = subdoc.body;
     document.body.appendChild(overlay);
 
     createOverlaysForPreExistingLabels({
@@ -276,7 +286,8 @@ function createPickingUiForLoadedIframe({
         if (!picking) {
             return;
         }
-        updateOverlayPosition(iframe, overlay, e.target);
+        currentlyHovered = e.target;
+        updateOverlayPosition(iframe, overlay, currentlyHovered);
     }
 
     // Stop element picker, set picked element and focus tag input
@@ -305,6 +316,7 @@ function createPickingUiForLoadedIframe({
             if (el instanceof HTMLIFrameElement) {
                 callWhenLoaded(el, function() {
                     hookAllElements(el.contentDocument.body);
+                    updateOverlaysOnScroll(el.contentWindow);
                 });
             } else {
                 el.addEventListener("mouseover", hoverHandler);
@@ -317,19 +329,25 @@ function createPickingUiForLoadedIframe({
     hookAllElements(subdoc.body);
 
     // Update fixed overlays when parent document is scrolled
-    let ticking = false;
-    window.addEventListener("scroll", function(e) {
-        if (!ticking) {
-            window.requestAnimationFrame(function() {
-                for (const [element, {overlay, tag}] of pickedElementsMap) {
-                    updateOverlayPosition(iframe, overlay, element);
-                }
-                ticking = false;
-            });
+    function updateOverlaysOnScroll(win) {
+        let ticking = false;
+        win.addEventListener("scroll", function(e) {
+            if (!ticking) {
+                window.requestAnimationFrame(function() {
+                    for (const [element, {overlay, tag}] of pickedElementsMap) {
+                        updateOverlayPosition(iframe, overlay, element);
+                    }
+                    updateOverlayPosition(iframe, overlay, currentlyHovered);
+                    ticking = false;
+                });
 
-            ticking = true;
-        }
-    });
+                ticking = true;
+            }
+        });
+    }
+
+    updateOverlaysOnScroll(window);
+    updateOverlaysOnScroll(iframe.contentWindow);
 
     if (typeof toggleBtn !== "undefined") {
         toggleBtn.addEventListener("click", function() {
