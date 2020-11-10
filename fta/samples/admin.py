@@ -1,5 +1,14 @@
-from django.contrib import admin
+from datetime import datetime
+from pathlib import Path
+from uuid import uuid4
+
+from django.conf import settings
+from django.contrib import admin, messages
+from django.core.files import File
+from django.core.files.storage import FileSystemStorage, default_storage
 from django.template.defaultfilters import truncatechars
+
+from fta.utils.storages import MediaRootGoogleCloudStorage
 
 from .models import Label, LabeledElement, LabeledSample, Sample
 from .utils import humansize
@@ -76,6 +85,7 @@ class LabelListFilter(admin.SimpleListFilter):
 class LabeledSampleAdmin(admin.ModelAdmin):
     list_select_related = True
 
+    # Search - only filters labels
     search_fields = ["labeled_elements__label__slug"]
 
     def get_search_results(self, request, queryset, search_term):
@@ -85,6 +95,43 @@ class LabeledSampleAdmin(admin.ModelAdmin):
         queryset = queryset.filter(labeled_elements__label__slug__in=slug_fields)
         return queryset, use_distinct
 
+    # Export actions
+    actions = [
+        "export_labeled_samples",
+    ]
+
+    def get_file_path(self, folder, file_name):
+        # Make a media file path to write to, depending on storage class.
+
+        # If GCS, we can just use a simple string
+        if isinstance(default_storage, MediaRootGoogleCloudStorage):
+            return f"{folder}/{file_name}"
+        # If filesystem, make sure it exists
+        elif isinstance(default_storage, FileSystemStorage):
+            folder_path = Path(default_storage.base_location) / folder
+            folder_path.mkdir(parents=True, exist_ok=True)
+            return folder_path / str(file_name)
+        else:
+            raise RuntimeError("FileSystem not supported for export")
+
+    def export_labeled_samples(self, request, queryset):
+        folder = f"{datetime.now():%Y-%m-%d}-{str(uuid4())[0:6]}"
+        for sample in queryset:
+            # TODO - process sample
+            processed_sample = sample.modified_sample
+            file_path = self.get_file_path(folder, sample.pk)
+            with open(file_path, "w") as f:
+                to_write = File(f)
+                to_write.write(processed_sample)
+        self.message_user(
+            request,
+            f"Samples were exported to {settings.MEDIA_ROOT}/{folder}",
+            messages.SUCCESS,
+        )
+
+    export_labeled_samples.short_description = "Export selected samples as fathom set"
+
+    # Filters
     list_filter = (
         "original_sample__freeze_software",
         "original_sample__freeze_time",
@@ -92,6 +139,7 @@ class LabeledSampleAdmin(admin.ModelAdmin):
         LabelListFilter,
     )
 
+    # Display
     list_display = (
         "id",
         "nlabels",
