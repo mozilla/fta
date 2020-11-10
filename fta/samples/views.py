@@ -4,7 +4,6 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import redirect, render, reverse
 from django.utils.encoding import smart_str
@@ -23,20 +22,10 @@ class SampleListView(LoginRequiredMixin, SingleTableView):
 
     def get_queryset(self, *args, **kwargs):
         requested_label = self.request.GET.get("label", None)
-        all_samples = (
-            Sample.objects.select_related("labeled_sample")
-            .prefetch_related("labeled_sample__labeled_elements")
-            .all()
-        )
+        all_samples = Sample.objects.get_queryset()
+
         if requested_label == "-":
-            # No labeled_samples yet
-            filtered_qs_1 = all_samples.filter(labeled_sample__isnull=True)
-            filtered_qs_2 = all_samples.filter(
-                pk__in=all_samples.filter(labeled_sample__isnull=False)
-                .annotate(nlabels=Count("labeled_sample__labeled_elements"))
-                .filter(nlabels__exact=0)
-            )
-            filtered_qs = filtered_qs_1.union(filtered_qs_2)
+            filtered_qs = all_samples.filter(nlabels__exact=0)
         else:
             try:
                 requested_label = Label.objects.get(slug=requested_label)
@@ -44,6 +33,7 @@ class SampleListView(LoginRequiredMixin, SingleTableView):
                     labeled_sample__labeled_elements__label=requested_label
                 ).distinct()
             except Label.DoesNotExist:
+                # Default to all
                 filtered_qs = all_samples
         return filtered_qs
 

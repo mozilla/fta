@@ -5,10 +5,23 @@ from django.dispatch import receiver
 SAMPLE_SOFTWARE_PARSERS = (("SingleFile", "SingleFile"), ("freezedry", "freezedry"))
 
 
+class SampleManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("labeled_sample")
+            .prefetch_related("labeled_sample__labeled_elements")
+            .annotate(nlabels=models.Count("labeled_sample__labeled_elements"))
+        )
+
+
 # Create your models here.
 class Sample(models.Model):
     # We are using binary fields for simplicity for the time being.
     # May want to change to external storage later.
+
+    objects = SampleManager()
 
     # Required
     frozen_page = models.TextField(
