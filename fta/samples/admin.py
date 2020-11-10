@@ -74,13 +74,23 @@ class LabelListFilter(admin.SimpleListFilter):
 
 @admin.register(LabeledSample)
 class LabeledSampleAdmin(admin.ModelAdmin):
+    list_select_related = True
+
+    search_fields = ["labeled_elements__label__slug"]
+
+    def get_search_results(self, request, queryset, search_term):
+        # See: https://docs.djangoproject.com/en/3.1/ref/contrib/admin/#django.contrib.admin.ModelAdmin.get_search_results # noqa
+        use_distinct = True
+        slug_fields = [x.strip() for x in search_term.split(",")]
+        queryset = queryset.filter(labeled_elements__label__slug__in=slug_fields)
+        return queryset, use_distinct
+
     list_filter = (
         "original_sample__freeze_software",
         "original_sample__freeze_time",
         PageSizeListFilter,
         LabelListFilter,
     )
-    list_select_related = True
 
     list_display = (
         "id",
