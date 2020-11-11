@@ -59,8 +59,9 @@ function outerRelativePositionForElement(element)
     const outermostRect = current.getBoundingClientRect();
 
     // Remove section hidden by scrolled outermost iframe
-    const hiddenTop = outermostRect.top - result.top;
-    result.height -= hiddenTop;
+    if (outermostRect.top > result.top) {
+        result.height -= outermostRect.top - result.top;
+    }
 
     // Clamp top to outermost iframe
     result.top = Math.max(result.top, outermostRect.top);
