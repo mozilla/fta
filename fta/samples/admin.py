@@ -8,7 +8,7 @@ from django.core.files.storage import get_storage_class
 from django.template.defaultfilters import truncatechars
 
 from .models import Label, LabeledElement, LabeledSample, Sample
-from .utils import humansize
+from .utils import convert_labeled_sample_to_fathom_sample, humansize
 
 
 @admin.register(Label)
@@ -101,12 +101,9 @@ class LabeledSampleAdmin(admin.ModelAdmin):
     def export_labeled_samples(self, request, queryset):
         storage_class = get_storage_class()
         storage = storage_class()
-
         folder = f"{datetime.now():%Y-%m-%d}-{str(uuid4())[0:6]}"
-
         for sample in queryset:
-            # TODO - process sample
-            processed_sample = sample.modified_sample.encode("utf-8")
+            processed_sample = convert_labeled_sample_to_fathom_sample(sample)
             storage.save(
                 name=f"{folder}/{sample.pk}", content=ContentFile(processed_sample)
             )
