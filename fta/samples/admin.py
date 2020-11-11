@@ -91,8 +91,9 @@ class LabeledSampleAdmin(admin.ModelAdmin):
     def get_search_results(self, request, queryset, search_term):
         # See: https://docs.djangoproject.com/en/3.1/ref/contrib/admin/#django.contrib.admin.ModelAdmin.get_search_results # noqa
         use_distinct = True
-        slug_fields = [x.strip() for x in search_term.split(",")]
-        queryset = queryset.filter(labeled_elements__label__slug__in=slug_fields)
+        if search_term:
+            slug_fields = [x.strip() for x in search_term.split(",")]
+            queryset = queryset.filter(labeled_elements__label__slug__in=slug_fields)
         return queryset, use_distinct
 
     # Export actions
