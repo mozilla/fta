@@ -1,14 +1,11 @@
 from datetime import datetime
-from pathlib import Path
 from uuid import uuid4
 
 from django.conf import settings
 from django.contrib import admin, messages
-from django.core.files import File
-from django.core.files.storage import FileSystemStorage, default_storage
+from django.core.files.base import ContentFile
+from django.core.files.storage import get_storage_class
 from django.template.defaultfilters import truncatechars
-
-from fta.utils.storages import MediaRootGoogleCloudStorage
 
 from .models import Label, LabeledElement, LabeledSample, Sample
 from .utils import humansize
@@ -101,29 +98,19 @@ class LabeledSampleAdmin(admin.ModelAdmin):
         "export_labeled_samples",
     ]
 
-    def get_file_path(self, folder, file_name):
-        # Make a media file path to write to, depending on storage class.
-
-        # If GCS, we can just use a simple string
-        if isinstance(default_storage, MediaRootGoogleCloudStorage):
-            return f"{folder}/{file_name}"
-        # If filesystem, make sure it exists
-        elif isinstance(default_storage, FileSystemStorage):
-            folder_path = Path(default_storage.base_location) / folder
-            folder_path.mkdir(parents=True, exist_ok=True)
-            return folder_path / str(file_name)
-        else:
-            raise RuntimeError("FileSystem not supported for export")
-
     def export_labeled_samples(self, request, queryset):
+        storage_class = get_storage_class()
+        storage = storage_class()
+
         folder = f"{datetime.now():%Y-%m-%d}-{str(uuid4())[0:6]}"
+
         for sample in queryset:
             # TODO - process sample
             processed_sample = sample.modified_sample
-            file_path = self.get_file_path(folder, sample.pk)
-            with open(file_path, "w") as f:
-                to_write = File(f)
-                to_write.write(processed_sample)
+            storage.save(
+                name=f"{folder}/{sample.pk}", content=ContentFile(processed_sample)
+            )
+
         self.message_user(
             request,
             f"Samples were exported to {settings.MEDIA_ROOT}/{folder}",
