@@ -103,9 +103,10 @@ class LabeledSampleAdmin(admin.ModelAdmin):
         storage = storage_class()
         folder = f"{datetime.now():%Y-%m-%d}-{str(uuid4())[0:6]}"
         for sample in queryset:
-            processed_sample = convert_labeled_sample_to_fathom_sample(sample)
+            processed_sample, suffix = convert_labeled_sample_to_fathom_sample(sample)
             storage.save(
-                name=f"{folder}/{sample.pk}", content=ContentFile(processed_sample)
+                name=f"{folder}/{sample.pk}{suffix}",
+                content=ContentFile(processed_sample),
             )
 
         self.message_user(

@@ -13,11 +13,15 @@ def humansize(nbytes):
     return "%s %s" % (f, suffixes[i])
 
 
-def convert_labeled_sample_to_fathom_sample(labeled_sample):
+def convert_labeled_sample_to_fathom_sample(labeled_sample, suffix=".html"):
     soup = BeautifulSoup(labeled_sample.modified_sample)
     labels = labeled_sample.labeled_elements.all()
-    for label in labels:
-        tagged_elements = soup.find_all(attrs={"data-fta_id": label.data_fta_id})
-        for element in tagged_elements:
-            element.attrs["data-fathom"] = label.label.slug
-    return soup.encode("utf-8")
+    if len(labels) == 0:
+        # Fathom looks for a `.n` suffix for negative examples
+        suffix = f".n{suffix}"
+    else:
+        for label in labels:
+            tagged_elements = soup.find_all(attrs={"data-fta_id": label.data_fta_id})
+            for element in tagged_elements:
+                element.attrs["data-fathom"] = label.label.slug
+    return soup.encode("utf-8"), suffix
