@@ -78,6 +78,11 @@ function updateOverlayPosition(iframe, overlay, tracked_element)
     overlay.style.left = absolutePos.left + "px";
     overlay.style.width = absolutePos.width + "px";
     overlay.style.height = absolutePos.height + "px";
+    if (absolutePos.height <= 0) {
+        overlay.style.visibility = "hidden";
+    } else {
+        overlay.style.visibility = "visible";
+    }
 }
 
 function createOverlayForPickedElement(iframe, pickedElement, pickedElementsMap, remover=true)
