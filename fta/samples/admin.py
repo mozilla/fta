@@ -106,14 +106,14 @@ class LabeledSampleAdmin(admin.ModelAdmin):
 
         for sample in queryset:
             # TODO - process sample
-            processed_sample = sample.modified_sample
+            processed_sample = sample.modified_sample.encode("utf-8")
             storage.save(
                 name=f"{folder}/{sample.pk}", content=ContentFile(processed_sample)
             )
 
         self.message_user(
             request,
-            f"Samples were exported to {settings.MEDIA_ROOT}/{folder}",
+            f"Samples were exported to {settings.MEDIA_URL}/{folder}",
             messages.SUCCESS,
         )
 
