@@ -1,6 +1,7 @@
 import random
 
 from bs4 import BeautifulSoup
+from uuid import uuid4
 
 suffixes = ["B", "KB", "MB", "GB", "TB", "PB"]
 
@@ -15,8 +16,27 @@ def humansize(nbytes):
     return "%s %s" % (f, suffixes[i])
 
 
+def convert_fathom_sample_to_labeled_sample(fathom_sample, suffix=".html"):
+    soup = BeautifulSoup(fathom_sample, features="html.parser")
+
+    # remove any existing data-fta_id attrs first
+    fta_labeled_elements = [item for item in soup.find_all() if "data-fta_id" in item.attrs]
+    for element in fta_labeled_elements:
+        del(element["data-fta_id"])
+
+    fathom_labeled_elements = [item for item in soup.find_all() if "data-fathom" in item.attrs]
+    label_to_fta_id = {}
+    for element in fathom_labeled_elements:
+        fathom_label = element.attrs["data-fathom"]
+        del(element["data-fathom"])
+        fta_id = uuid4()
+        element.attrs["data-fta_id"] = fta_id
+        label_to_fta_id[fathom_label] = fta_id
+    return str(soup), label_to_fta_id
+
+
 def convert_labeled_sample_to_fathom_sample(labeled_sample, suffix=".html"):
-    soup = BeautifulSoup(labeled_sample.modified_sample)
+    soup = BeautifulSoup(labeled_sample.modified_sample, features="html.parser")
     labels = labeled_sample.labeled_elements.all()
     if len(labels) == 0:
         # Fathom looks for a `.n` suffix for negative examples
