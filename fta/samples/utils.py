@@ -1,7 +1,7 @@
 import random
+from uuid import uuid4
 
 from bs4 import BeautifulSoup
-from uuid import uuid4
 
 suffixes = ["B", "KB", "MB", "GB", "TB", "PB"]
 
@@ -20,15 +20,19 @@ def convert_fathom_sample_to_labeled_sample(fathom_sample, suffix=".html"):
     soup = BeautifulSoup(fathom_sample, features="html.parser")
 
     # remove any existing data-fta_id attrs first
-    fta_labeled_elements = [item for item in soup.find_all() if "data-fta_id" in item.attrs]
+    fta_labeled_elements = [
+        item for item in soup.find_all() if "data-fta_id" in item.attrs
+    ]
     for element in fta_labeled_elements:
-        del(element["data-fta_id"])
+        del element["data-fta_id"]
 
-    fathom_labeled_elements = [item for item in soup.find_all() if "data-fathom" in item.attrs]
+    fathom_labeled_elements = [
+        item for item in soup.find_all() if "data-fathom" in item.attrs
+    ]
     label_to_fta_id = {}
     for element in fathom_labeled_elements:
         fathom_label = element.attrs["data-fathom"]
-        del(element["data-fathom"])
+        del element["data-fathom"]
         fta_id = uuid4()
         element.attrs["data-fta_id"] = fta_id
         label_to_fta_id[fathom_label] = fta_id

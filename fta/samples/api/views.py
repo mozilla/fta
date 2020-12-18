@@ -2,9 +2,9 @@ from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import Sample, LabeledSample, LabeledElement, Label
-from ..views import sample_from_required
+from ..models import Label, LabeledElement, LabeledSample, Sample
 from ..utils import convert_fathom_sample_to_labeled_sample
+from ..views import sample_from_required
 from .serializers import SampleListSerializer, SampleSerializer
 
 
@@ -58,10 +58,11 @@ class AddFathomSampleViewSet(viewsets.ViewSet):
         sample = sample_from_required(frozen_page, freeze_software, notes)
         sample.save()
 
-        fta_sample, labels_to_fta_ids = convert_fathom_sample_to_labeled_sample(frozen_page)
+        fta_sample, labels_to_fta_ids = convert_fathom_sample_to_labeled_sample(
+            frozen_page
+        )
         labeled_sample, _ = LabeledSample.objects.get_or_create(
-                original_sample=sample,
-                modified_sample=fta_sample
+            original_sample=sample, modified_sample=fta_sample
         )
 
         for fathom_label, fta_id in labels_to_fta_ids.items():
