@@ -29,14 +29,14 @@ def convert_fathom_sample_to_labeled_sample(fathom_sample, suffix=".html"):
     fathom_labeled_elements = [
         item for item in soup.find_all() if "data-fathom" in item.attrs
     ]
-    label_to_fta_id = {}
+    fta_id_to_label = {}
     for element in fathom_labeled_elements:
         fathom_label = element.attrs["data-fathom"]
         del element["data-fathom"]
         fta_id = uuid4()
         element.attrs["data-fta_id"] = fta_id
-        label_to_fta_id[fathom_label] = fta_id
-    return str(soup), label_to_fta_id
+        fta_id_to_label[fta_id] = fathom_label
+    return str(soup), fta_id_to_label
 
 
 def convert_labeled_sample_to_fathom_sample(labeled_sample, suffix=".html"):
