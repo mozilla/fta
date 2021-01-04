@@ -58,14 +58,14 @@ class AddFathomSampleViewSet(viewsets.ViewSet):
         sample = sample_from_required(frozen_page, freeze_software, notes)
         sample.save()
 
-        fta_sample, labels_to_fta_ids = convert_fathom_sample_to_labeled_sample(
+        fta_sample, fta_ids_to_label = convert_fathom_sample_to_labeled_sample(
             frozen_page
         )
         labeled_sample, _ = LabeledSample.objects.get_or_create(
             original_sample=sample, modified_sample=fta_sample
         )
 
-        for fathom_label, fta_id in labels_to_fta_ids.items():
+        for fta_id, fathom_label in fta_ids_to_label.items():
             stored_label, created = Label.objects.get_or_create(slug=fathom_label)
             LabeledElement.objects.get_or_create(
                 labeled_sample=labeled_sample,
