@@ -8,11 +8,10 @@ SAMPLE_SOFTWARE_PARSERS = (("SingleFile", "SingleFile"), ("freezedry", "freezedr
 class SampleManager(models.Manager):
     def get_queryset(self):
         return (
-            super()
-            .get_queryset()
-            .select_related("labeled_sample")
-            .prefetch_related("labeled_sample__labeled_elements")
-            .annotate(nlabels=models.Count("labeled_sample__labeled_elements"))
+            super().get_queryset()
+            #  .select_related("labeled_sample")  # needed to comment out since the relationship is no longer <-->
+            #  .prefetch_related("labeled_sample__labeled_elements")
+            #  .annotate(nlabels=models.Count("labeled_sample__labeled_elements"))
         )
 
 
@@ -97,14 +96,22 @@ class LabeledSample(models.Model):
 
     objects = LabeledSampleManager()
 
-    original_sample = models.OneToOneField(
-        Sample,
+    original_sample = models.ForeignKey(
+        to=Sample,
         related_name="labeled_sample",
         on_delete=models.CASCADE,
         blank=False,
         null=False,
         help_text="Link to the original sample",
     )
+
+    # Later
+    # superseded_by = models.OneToOneField(
+    #     to=self,
+    #     related_name="superseded_by",
+    #     blank=False,
+    #     null=False,
+    # )
     modified_sample = models.TextField(
         help_text="Sample page modified with labeling ids. This is mutable.",
         blank=False,
