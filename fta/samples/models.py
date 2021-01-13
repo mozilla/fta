@@ -8,10 +8,10 @@ SAMPLE_SOFTWARE_PARSERS = (("SingleFile", "SingleFile"), ("freezedry", "freezedr
 class SampleManager(models.Manager):
     def get_queryset(self):
         return (
-            super().get_queryset()
-            #  .select_related("labeled_sample")  # needed to comment out since the relationship is no longer <-->
-            #  .prefetch_related("labeled_sample__labeled_elements")
-            #  .annotate(nlabels=models.Count("labeled_sample__labeled_elements"))
+            super()
+            .get_queryset()
+            .prefetch_related("labeled_sample__labeled_elements")
+            .annotate(nlabels=models.Count("labeled_sample__labeled_elements"))
         )
 
 
@@ -87,6 +87,7 @@ class LabeledSampleManager(models.Manager):
         return (
             super()
             .get_queryset()
+            .filter(superseded_by=None)
             .prefetch_related("labeled_elements")
             .annotate(nlabels=models.Count("labeled_elements"))
         )
@@ -105,13 +106,14 @@ class LabeledSample(models.Model):
         help_text="Link to the original sample",
     )
 
-    # Later
-    # superseded_by = models.OneToOneField(
-    #     to=self,
-    #     related_name="superseded_by",
-    #     blank=False,
-    #     null=False,
-    # )
+    superseded_by = models.ForeignKey(
+        to="self",
+        related_name="labeled_sample",
+        on_delete=models.CASCADE,
+        blank=False,
+        null=True,
+    )
+
     modified_sample = models.TextField(
         help_text="Sample page modified with labeling ids. This is mutable.",
         blank=False,
@@ -137,7 +139,19 @@ class Label(models.Model):
         return self.slug
 
 
+class LabeledElementManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("labeled_sample")
+            .filter(labeled_sample__superseded_by=None)
+        )
+
+
 class LabeledElement(models.Model):
+    objects = LabeledElementManager()
+
     labeled_sample = models.ForeignKey(
         to=LabeledSample,
         related_name="labeled_elements",

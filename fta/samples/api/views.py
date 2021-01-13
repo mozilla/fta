@@ -60,28 +60,35 @@ class AddFathomSampleViewSet(viewsets.ViewSet):
             "-id"
         )[:1]
 
+        # If the sample already exists reuse it.
         if existing_sample.exists() is False:
-            print(f"Sample with URL: {sample.url} did not exist, saving")
             sample.save()
         else:
-            print(f"Sample with URL: {sample.url} already exists, re-using.")
             sample = existing_sample.first()
 
-        print("Creating LabeledSample")
+        # check if a LabeledSample already exists for the sample.
+        existing_labeled_sample = LabeledSample.objects.filter(
+            original_sample_id=sample.id
+        )
+
+        id_of_existing_labeled_sample = -1
+        if existing_labeled_sample.exists() is True:
+            id_of_existing_labeled_sample = existing_labeled_sample.first().id
+
         fta_sample, fta_ids_to_label = convert_fathom_sample_to_labeled_sample(
             frozen_page
         )
-        print("Saving LabeledSample")
         labeled_sample, _ = LabeledSample.objects.get_or_create(
             original_sample=sample, modified_sample=fta_sample
         )
 
-        existing_labeled_sample = LabeledSample.objects.filter(
-            original_sample_id=sample.id
-        )
-        print(f"Existing labeled_sample = {existing_labeled_sample}")
+        # If a LabeledSample already existed need to update the superseded_by field to the newly create LabeledSample.
+        if id_of_existing_labeled_sample != -1:
+            LabeledSample.objects.filter(id=id_of_existing_labeled_sample).update(
+                superseded_by=labeled_sample.id
+            )
 
-        # Since we will always create a LabelledSample always create a LabelledElement.
+        # Create a LabeledElement.
         for fta_id, fathom_label in fta_ids_to_label.items():
             stored_label, created = Label.objects.get_or_create(slug=fathom_label)
             LabeledElement.objects.get_or_create(
