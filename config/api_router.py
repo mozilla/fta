@@ -16,7 +16,7 @@ else:
 router.register("samples", SampleViewSet)
 router.register("add_sample", AddSampleViewSet, basename="add_sample")
 router.register(
-    "add_fathom_sample", AddFathomSampleViewSet, basename="add_fathom_sample"
+    "add_labeled_sample", AddFathomSampleViewSet, basename="add_labeled_sample"
 )
 
 

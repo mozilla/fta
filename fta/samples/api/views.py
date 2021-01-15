@@ -48,10 +48,10 @@ class AddSampleViewSet(viewsets.ViewSet):
 
 
 class AddFathomSampleViewSet(viewsets.ViewSet):
-    basename = "add_fathom_sample"
+    basename = "add_labeled_sample"
 
     @action(detail=False, methods=["post"])
-    def add_fathom_sample(self, request, format=None):
+    def add_labeled_sample(self, request, format=None):
         frozen_page = request.data["frozen_page"]
         freeze_software = request.data["freeze_software"]
         notes = request.data["notes"] if "notes" in request.data else ""
