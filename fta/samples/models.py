@@ -108,8 +108,8 @@ class LabeledSample(models.Model):
 
     superseded_by = models.ForeignKey(
         to="self",
-        related_name="labeled_sample",
-        on_delete=models.CASCADE,
+        related_name="superseded_labeled_samples",
+        on_delete=models.DO_NOTHING,
         blank=False,
         null=True,
     )
