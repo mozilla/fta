@@ -88,7 +88,7 @@ class AddFathomSampleViewSet(viewsets.ViewSet):
                 superseded_by=labeled_sample.id
             )
 
-        # Create a LabeledElement.
+        # Create LabeledElements
         for fta_id, fathom_label in fta_ids_to_label.items():
             stored_label, created = Label.objects.get_or_create(slug=fathom_label)
             LabeledElement.objects.get_or_create(
