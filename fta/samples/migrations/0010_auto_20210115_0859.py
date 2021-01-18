@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='labeledsample',
             name='superseded_by',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='superseded_labeled_samples', to='samples.LabeledSample'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='superseded_labeled_samples', to='samples.LabeledSample'),
         ),
     ]
