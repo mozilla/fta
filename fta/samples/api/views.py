@@ -47,48 +47,45 @@ class AddSampleViewSet(viewsets.ViewSet):
         return Response({"id": sample.id})
 
 
-class AddFathomSampleViewSet(viewsets.ViewSet):
+class AddLabeledSampleViewSet(viewsets.ViewSet):
     basename = "add_labeled_sample"
 
     @action(detail=False, methods=["post"])
     def add_labeled_sample(self, request, format=None):
-        frozen_page = request.data["frozen_page"]
+        labeled_page = request.data["labeled_page"]
         freeze_software = request.data["freeze_software"]
         notes = request.data["notes"] if "notes" in request.data else ""
-        sample = sample_from_required(frozen_page, freeze_software, notes)
-        existing_sample = Sample.objects.filter(url__exact=sample.url).order_by("-id")[
-            :1
-        ]
+        labeled_sample_id = request.data["labeled_sample_id"]
 
-        # If the sample already exists reuse it.
-        if existing_sample.exists() is False:
+        # 1. Get the LabeledSample
+        try:
+            existing_labeled_sample = LabeledSample.objects.get(id=labeled_sample_id)
+        except LabeledSample.DoesNotExist:
+            existing_labeled_sample = None
+
+        if not existing_labeled_sample:
+            # 2. If the LabeledSample does not exist create  first create the Sample
+            sample = sample_from_required(labeled_page, freeze_software, notes)
             sample.save()
         else:
-            sample = existing_sample.first()
+            # 2. Get the associated original sample.  Should always exist due to FK and cannot be Null
+            sample = Sample.objects.get(id=existing_labeled_sample.original_sample_id)
 
-        # check if a LabeledSample already exists for the sample.
-        existing_labeled_sample = LabeledSample.objects.filter(
-            original_sample_id=sample.id
-        )
-
-        id_of_existing_labeled_sample = -1
-        if existing_labeled_sample.exists() is True:
-            id_of_existing_labeled_sample = existing_labeled_sample.first().id
-
+        # 3. Create the new LabeledSample and save it.
         fta_sample, fta_ids_to_label = convert_fathom_sample_to_labeled_sample(
-            frozen_page
+            labeled_page
         )
         labeled_sample, _ = LabeledSample.objects.get_or_create(
             original_sample=sample, modified_sample=fta_sample
         )
 
-        # If a LabeledSample already existed need to update the superseded_by field to the newly create LabeledSample.
-        if id_of_existing_labeled_sample != -1:
-            LabeledSample.objects.filter(id=id_of_existing_labeled_sample).update(
+        # 4. If the sample did exist then update the superseded_by fields
+        if existing_labeled_sample:
+            LabeledSample.objects.filter(id=labeled_sample_id).update(
                 superseded_by=labeled_sample.id
             )
 
-        # Create LabeledElements
+        # 5. Create LabeledElements
         for fta_id, fathom_label in fta_ids_to_label.items():
             stored_label, created = Label.objects.get_or_create(slug=fathom_label)
             LabeledElement.objects.get_or_create(

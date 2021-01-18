@@ -2,7 +2,7 @@ from django.conf import settings
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from fta.samples.api.views import (
-    AddFathomSampleViewSet,
+    AddLabeledSampleViewSet,
     AddSampleViewSet,
     SampleViewSet,
 )
@@ -16,7 +16,7 @@ else:
 router.register("samples", SampleViewSet)
 router.register("add_sample", AddSampleViewSet, basename="add_sample")
 router.register(
-    "add_labeled_sample", AddFathomSampleViewSet, basename="add_labeled_sample"
+    "add_labeled_sample", AddLabeledSampleViewSet, basename="add_labeled_sample"
 )
 
 
