@@ -142,12 +142,7 @@ class Label(models.Model):
 
 class LabeledElementManager(models.Manager):
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related("labeled_sample")
-            .filter(labeled_sample__superseded_by=None)
-        )
+        return super().get_queryset().filter(labeled_sample__superseded_by=None)
 
 
 class LabeledElement(models.Model):
