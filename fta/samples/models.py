@@ -10,6 +10,7 @@ class SampleManager(models.Manager):
         return (
             super()
             .get_queryset()
+            .prefetch_related("labeled_sample")
             .prefetch_related("labeled_sample__labeled_elements")
             .annotate(nlabels=models.Count("labeled_sample__labeled_elements"))
         )
