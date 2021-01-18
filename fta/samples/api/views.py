@@ -56,9 +56,9 @@ class AddFathomSampleViewSet(viewsets.ViewSet):
         freeze_software = request.data["freeze_software"]
         notes = request.data["notes"] if "notes" in request.data else ""
         sample = sample_from_required(frozen_page, freeze_software, notes)
-        existing_sample = Sample.objects.filter(url__contains=sample.url).order_by(
-            "-id"
-        )[:1]
+        existing_sample = Sample.objects.filter(url__exact=sample.url).order_by("-id")[
+            :1
+        ]
 
         # If the sample already exists reuse it.
         if existing_sample.exists() is False:
